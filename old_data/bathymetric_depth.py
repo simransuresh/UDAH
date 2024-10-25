@@ -7,9 +7,7 @@ import matplotlib.pyplot as plt
 
  ####### bathymetric depth given in meters from IBCAO dataset
 # Open the original NetCDF file
-print('Loading IBCAO bathymetric depth....')
-
-ds = nc.Dataset('./data/IBCAO_v4_2_13_400m_ice.nc', 'r')
+ds = nc.Dataset('data/IBCAO_v4_2_13_400m_ice.nc', 'r')
 
 x = ds.variables['x'][:]
 y = ds.variables['y'][:]

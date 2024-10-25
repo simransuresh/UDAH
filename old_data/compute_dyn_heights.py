@@ -54,28 +54,28 @@ for latlon,data in hydr_data.items():
     T = [data['temp'][idx] for idx in range(len(D))]
     S = [data['sali'][idx] for idx in range(len(D))]
     P = [data['pres'][idx] for idx in range(len(D))]
-    print('Retrieving depth upto 400m ... ')
+    # print('Retrieving depth upto 400m ... ')
     
     if len(D) > 0:
         xdept = np.linspace(0,400,201)
         ytemp = interpolate.interp1d(D, T, fill_value='extrapolate')(xdept)
         ysali = interpolate.interp1d(D, S, fill_value='extrapolate')(xdept)
         ypres = interpolate.interp1d(D, P, fill_value='extrapolate')(xdept)
-        print('Interpolating for every 2m upto 400m...') 
+        # print('Interpolating for every 2m upto 400m...') 
         
         # Compute Absolute Salinity from practical salinity 
         SA = gsw.SA_from_SP(ysali, ypres, latlon[1], latlon[0])
-        print('Computing absolute salinity...')
+        # print('Computing absolute salinity...')
         
         # Compute Conservative Temperature from SA and temperature
         CT = gsw.CT_from_t(SA, ytemp, ypres)
-        print('Computing conservative temperature...')
+        # print('Computing conservative temperature...')
         
         try:  
             # Integrate specific volume anomaly to compute dynamic height 
             # REF: https://www.teos-10.org/pubs/gsw/html/gsw_geo_strf_dyn_height.html
             dyn_height_anom = gsw.geostrophy.geo_strf_dyn_height(SA, CT, ypres, p_ref=400)
-            print('Computing dynamic height anomaly...')
+            # print('Computing dynamic height anomaly...')
             
             # REF: https://www.teos-10.org/pubs/gsw/html/gsw_geo_strf_steric_height.html
             ster_height = dyn_height_anom[0] / 9.8 # TODO change g wrt lat
@@ -85,6 +85,7 @@ for latlon,data in hydr_data.items():
             
             # DOT or absolute ssh is the dynamic height at the surface pressure 0dbar
             hydr_data[latlon]['ssh'] = ster_height
+            # hydr_data[latlon]['ssh'] = dyn_height_anom[0]
             print('Setting steric height...', hydr_data[latlon]['ssh'])
             
         except ValueError as err:
