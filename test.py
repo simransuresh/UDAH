@@ -1,280 +1,128 @@
-# import pandas as pd 
 
-# # data = pd.read_csv('60e_2015.csv')
-# # lon = data['Longitude_[deg]']
+# from compute_gsc import lats, lons, dot, ug, vg
+# from scipy.interpolate import interp2d
+# print(lats.shape, lons.shape, dot.shape, ug.shape, vg.shape)
+# lons = lons+180
 
-# with open('60E_2015_50m.txt', 'r') as fp:
-#     data = fp.readlines()
-    
-# pressure_ = []
-# depth_ = []
-# temp_ = []
-# salin_ = []
+# f = interp2d(lons, lats, dot)
+# interp_dot = f(longitudes, latitudes)
+# print(interp_dot.shape)
+# f = interp2d(lons, lats, ug)
+# interp_nug = f(longitudes, latitudes)
+# print(interp_nug.shape)
+# f = interp2d(lons, lats, vg)
+# interp_nvg = f(longitudes, latitudes)
+# print(interp_nvg.shape)
 
-# for d in data:
-#     d = d[:-1]
-#     d = d.split('\t')
-#     # print(d)
-    
-#     lon = d[0]
-#     lat = d[1]
-#     pressure_.append(d[2])
-#     depth_.append(d[3]) 
-#     temp_.append(d[5]) 
-#     salin_.append(d[7]) 
-    
-# # print(lon, lat, pressure_, depth_, temp_, salin_)
-    
-    
-# def tsp2density(T, S, p):
-#     T = float(T)
-#     S = float(S)
-#     p = float(p)
-#     # % Density of pure water as a function of the temperature (kg/m3)
-#     # % water salinity = 0 ppt
-#     rhow = 999.842594 + (6.793952e-2 * T) - (9.095290e-3 * T**2) + (1.001685e-4 * T**3) - (1.120083e-6 * T**4) + (6.536332e-9 * T**5)
-    
-#     # % Water density (kg/m3) at one standard atmosphere, p = 0. 
-#     rhost0 = rhow + (S * (0.824493 - (4.0899e-3 * T) + (7.6438e-5 * T**2) - (8.2467e-7 * T**3) + (5.3875e-9 * T**4))) + ( S**(3/2) * (-5.72466e-3 + (1.0227e-4 * T) - (1.6546e-6 * T**2))) + ( 4.8314e-4 * S**2)
-#     # % Water pure secant bulk modulus
-#     kw = 19652.21 + (148.4206 * T) - (2.327105 * T**2) + (1.360477e-2 * T**3) - (5.155288e-5 * T**4)
-#     # % Water secant bulk modulus at one standard atmosphere (p = 0)
-#     kst0 = kw + (S * (54.6746 - (0.603459 * T) + (1.09987e-2 * T**2) -(6.1670e-5 * T**3))) + (S **(3/2) * (7.944e-2 + (1.6483e-2 * T) -(5.3009e-4 * T**2)))
-    
-#     # % Water secant bulk modulus at pressure values, p
-#     kstp = kst0 + \
-#         (p*(3.239908 + (1.43713e-3 * T) + (1.16092e-4 * T**2) -(5.77905e-7* T**3))) + \
-#         ((p*S) *(2.2838e-3 - (1.0981e-5 * T) - (1.6078e-6 * T**2))) + \
-#         (1.91075e-4 * p * S**(3/2)) + \
-#         (p**2 * (8.50935e-5 - (6.12293e-6 * T) + (5.2787e-8 * T**2))) + \
-#         ((p**2 *S) * (-9.9348e-7 + (2.0816e-8 * T) + (9.1697e-10 * T**2)))
-        
-#     # % Water density at any pressure (kg/m3)
-#     rho = rhost0/(1-(p/kstp))
-#     return rho
-
-# rho_ = []
-# for i in range(len(pressure_)):
-#     rho = tsp2density(temp_[i], salin_[i], pressure_[i])
-#     rho_.append(rho)
-    
-    # print(rho)
-
-
-# import pandas as pd
-# from compute_dyn_heights import hydr_data
-# import csv
-
-# fp = open('ll.csv', 'w+', newline='')
-# writer = csv.writer(fp, delimiter=',')
-
-# for k, v in hydr_data.items():
-#     lat, lon = k[0], k[1]
-#     writer.writerow([lat, lon])
-    
-# fp.close()
-
-# # for each latlon compute the dynamic height using t, s, p and absolute ssh 
-# i=0
-# for latlon,data in hydr_data.items():
-    
-#     # Compute Absolute Salinity from practical salinity 
-#     SA = gsw.SA_from_SP(data['sali'], data['pres'], latlon[1], latlon[0])
-
-#     # Compute Conservative Temperature from SA and temperature
-#     CT = gsw.CT_from_t(SA, data['temp'], data['pres'])
-
-#     try:
-
-#         # Integrate specific volume anomaly to compute dynamic height
-#         geopot_height_anom = gsw.geo_strf_dyn_height(SA, CT, data['pres'], p_ref=0)
-#         dyn_height_anom = geopot_height_anom / 9.8
-#         # print(dynamic_height_anom)
-        
-#         # DOT or absolute ssh is the dynamic height at the surface pressure 0dbar
-#         # abs_ssh = dynamic_height[0]
-#         hydr_data[latlon]['ssh'] = dyn_height_anom[-1]
-        
-#         print(latlon, hydr_data[latlon]['ssh'])
-        
-#     except ValueError as err:
-#         # print(latlon, data['pres'])
-#         hydr_data[latlon]['ssh'] = np.nan
-#         i=i+1
-        
-# print(i)    # 5 profiles throw error of pressure not monotonically increasing
-
-# gives pairwise difference between each data point with each other
-# n2 = np.sum((Od[:,np.newaxis] - Od[np.newaxis,:])**2)/(2*n)  ??
-# n2 = np.sum([ for ])
-
-
-# import matplotlib.pyplot as plt
-# from matplotlib import colors
-# from matplotlib.ticker import PercentFormatter
 # import numpy as np
+# import matplotlib.pyplot as plt
+# import datetime
+# from mpl_toolkits.basemap import Basemap, shiftgrid
+# from netCDF4 import Dataset
 
-# # Create a random number generator with a fixed seed for reproducibility
-# rng = np.random.default_rng(19680801)
+# # specify date to plot.
+# yyyy=1993; mm=3; dd=14; hh=0
+# date = datetime.datetime(yyyy,mm,dd,hh)
+# # set OpenDAP server URL.
+# URLbase="https://www.ncei.noaa.gov/thredds/dodsC/model-cfs_reanl_6h_pgb/"
+# URL=URLbase+"%04i/%04i%02i/%04i%02i%02i/pgbh00.gdas.%04i%02i%02i%02i.grb2" %\
+#              (yyyy,yyyy,mm,yyyy,mm,dd,yyyy,mm,dd,hh)
+# data = Dataset(URL)
 
-# N_points = 100000
-# n_bins = 20
+# latitudes = data.variables['lat'][::-1]
+# longitudes = data.variables['lon'][:].tolist() 
+# # latitudes = [lat for lat in latitudes if float(lat)>=60 and float(lat)<=88]
+# print(len(latitudes), latitudes)
+# print(len(longitudes), longitudes)
 
-# # Generate two normal distributions
-# dist1 = rng.standard_normal(N_points)
+# slpin = 0.01*data.variables['Pressure_msl'][:].squeeze()
+# uin = data.variables['u-component_of_wind_height_above_ground'][:].squeeze()
+# vin = data.variables['v-component_of_wind_height_above_ground'][:].squeeze()
+# print(slpin.shape, uin.shape, vin.shape)
+# print(uin)
+# print(vin)
 
-# # fig, axs = plt.plot(1, 2, tight_layout=True)
+# # add cyclic points manually (could use addcyclic function)
+# slp = np.zeros((slpin.shape[0],slpin.shape[1]+1),np.float64)
+# slp[:,0:-1] = slpin[::-1]; slp[:,-1] = slpin[::-1,0]
+# u = np.zeros((uin.shape[0],uin.shape[1]+1),np.float64)
+# u[:,0:-1] = uin[::-1]; u[:,-1] = uin[::-1,0]
+# v = np.zeros((vin.shape[0],vin.shape[1]+1),np.float64)
+# v[:,0:-1] = vin[::-1]; v[:,-1] = vin[::-1,0]
+# longitudes.append(360.); longitudes = np.array(longitudes)
+# lons, lats = np.meshgrid(longitudes,latitudes)
 
-# # N is the count in each bin, bins is the lower-limit of the bin
-# N, bins, patches = plt.hist(dist1, bins=n_bins)
+# m = Basemap(projection='nplaea',boundinglat=60,lon_0=0,resolution='l')
+# fig1 = plt.figure(figsize=(6,6))
+# ax = fig1.add_axes([0.1,0.1,0.8,0.8])
+# x, y = m(lons, lats)
 
-# # We'll color code by height, but you could use any scalar
-# fracs = N / N.max()
+# ugrid,newlons = shiftgrid(180.,u,longitudes,start=False)
+# vgrid,newlons = shiftgrid(180.,v,longitudes,start=False)
 
-# # we need to normalize the data to 0..1 for the full range of the colormap
-# norm = colors.Normalize(fracs.min(), fracs.max())
-
-# # Now, we'll loop through our objects and set the color of each accordingly
-# for thisfrac, thispatch in zip(fracs, patches):
-#     color = plt.cm.viridis(norm(thisfrac))
-#     thispatch.set_facecolor(color)
-
+# uproj,vproj,xx,yy = \
+# m.transform_vector(ugrid,vgrid,newlons,latitudes,31,31,returnxy=True,masked=True)
+# Q = m.quiver(xx,yy,uproj,vproj,scale=700)
+# qk = plt.quiverkey(Q, 0.1, 0.1, 20, '20 m/s', labelpos='W')
+# m.drawcoastlines(linewidth=1.5)
 # plt.show()
 
-# import numpy as np
-# print(np.linspace(0,400,401))
+# # ############# plotting animation of annual mean
+# fig, ax = plt.subplots(1, 2, figsize=(10, 8))
 
-        # REF: https://faculty.washington.edu/luanne/pages/ocean420/notes/Dynamic.pdf
-        # try:
-        #     DH = 0
-        #     for idx in range(len(D)-1):
-        #         dp = P[idx] - P[idx+1]
-        #         SA = gsw.SA_from_SP(S[idx], P[idx], latlon[1], latlon[0])
-        #         CT = gsw.CT_from_t(SA, T[idx], P[idx])
-        #         rho = gsw.density.rho(SA, CT, P[idx])
-        #         # integral of specific volume anomaly 
-        #         DH = DH + (1/rho)*dp
-
-        #     DH = -DH/9.7
-        #     print(DH)
-        #     hydr_data[latlon]['ssh'] = DH
-        
-        
-# reference TS   
-# S_ref = 34.8    # from Aagard paper for AO
-# T_ref = 0
-########### using Steele paper
-# def get_density(P, lat, lon, S, T):
-#     # if S is None: S=S_ref
-#     # if T is None: T=T_ref
-    
-#     SA = gsw.SA_from_SP(S, P, lon, lat)
-#     CT = gsw.CT_from_t(SA, T, P)
-#     rho = gsw.density.rho(SA, CT, P)
-    
-#     return rho
-
-# # computing dynamic height from density     
-# for latlon,data in hydr_data.items():
-#     lat = latlon[0]
-#     lon = latlon[1]
-    
-#     # interpolate upto 400m depth for each 2m step
-#     D = [d for d in data['dept'] if d<=400]
-#     T = [data['temp'][idx] for idx in range(len(D))]
-#     S = [data['sali'][idx] for idx in range(len(D))]
-#     P = [data['pres'][idx] for idx in range(len(D))]
-    
- 
-#     if len(D) > 0:
-#         xdept = np.linspace(0,400,201)
-#         ytemp = interpolate.interp1d(D, T, fill_value='extrapolate')(xdept)
-#         ysali = interpolate.interp1d(D, S, fill_value='extrapolate')(xdept)
-#         ypres = interpolate.interp1d(D, P, fill_value='extrapolate')(xdept)
-        
-#         D = xdept[::-1]
-#         T = ytemp[::-1]
-#         S = ysali[::-1]
-#         P = ypres[::-1]
-        
-#         dh = 0
-#         for idx in range(len(D)-1):
-#             # if P[idx] <= 500: 
-#             rho_ref = get_density(P[idx], lat, lon, S=S_ref, T=T_ref)
-#             rho = get_density(P[idx], lat, lon, S=S[idx], T=T[idx])
-            
-#             dz = D[idx] - D[idx+1]
-#             dh += (((rho_ref-rho)/rho_ref) * dz)
-#         # print(dh)
-            
-#         hydr_data[latlon]['ssh'] = dh 
-        # print(latlon, hydr_data[latlon]['ssh'])
-
-import numpy as np
-
-# def normalize_lat_lon(lat, lon):
-#     # Normalize latitude to the range [-90, 90]
-#     lat = (lat + 90) % 180 - 90
-
-#     # Normalize longitude to the range [-180, 180]
-#     lon = (lon + 180) % 360 - 180
-#     return lat, lon
-
-# # Example latitude and longitude values
-# latitude = [95, -100, 45, 88, -92]  # Some latitudes are out of range
-# longitude = [190, -190, 360, -370, 720]  # Longitudes are also out of range
-
-# # Normalize the latitudes and longitudes
-# latitude, longitude = normalize_lat_lon(np.array(latitude), np.array(longitude))
-
-# print("Normalized Latitude:", latitude)
-# print("Normalized Longitude:", longitude)
+# m = Basemap(projection='npstere', lon_0=0, lat_0=90, boundinglat=60, ax=ax[0])
+# x, y = m(lon, lat)
+# def animate1(frame):
+#     m.pcolormesh(x, y, dot_annual_mean[frame][:,:], cmap='viridis', ax=ax[0])
+#     m.colorbar(ax=ax[0], label='DOT [m]')
+#     ax[0].quiver(x, y, ug_annual_mean[frame][:,:], vg_annual_mean[frame][:,:], scale=10, color='black', alpha=0.5)
+#     ax[0].set_title(frame)
+#     return fig,
+# animation1 = FuncAnimation(fig, animate1, frames=dot_annual_mean.keys(), interval=100) 
 
 
-# print(np.linspace(70, 80, 41))
-# print(np.linspace(-155, -125, 61))
+# ############# plotting animation of biannual mean
+# m = Basemap(projection='npstere', lon_0=0, lat_0=90, boundinglat=60, ax=ax[1])
+# x, y = m(lon, lat)
+# def animate2(frame):
+#     m.pcolormesh(x, y, dot_biannual_mean[frame][:,:], cmap='viridis', ax=ax[1])
+#     m.colorbar(ax=ax[1], label='DOT [m]')
+#     ax[1].quiver(x, y, ug_biannual_mean[frame][:,:], vg_biannual_mean[frame][:,:], scale=10, color='black', alpha=0.5)
+#     ax[1].set_title(frame)
+#     return fig,
+# animation2 = FuncAnimation(fig, animate2, frames=dot_biannual_mean.keys(), interval=200) 
 
-import numpy as np
+# m.drawcoastlines(ax=ax[0])
+# m.drawcoastlines(ax=ax[1])
+# ax[0].set_aspect('equal')
+# ax[1].set_aspect('equal')
+# # plt.tight_layout()
+# plt.show()
+
 import pandas as pd
+from scipy.spatial import KDTree
+import time
 
-def date_difference(dates1, dates2=None):
-    # Convert dates1 to pandas datetime objects
-    dates1 = pd.to_datetime(dates1)
-    
-    # Case 1: Difference between two individual dates
-    if dates2 is not None:
-        dates2 = pd.to_datetime(dates2)
-        # If both are single dates, return the difference
-        if isinstance(dates1, pd.Timestamp) and isinstance(dates2, pd.Timestamp):
-            return abs((dates1 - dates2).days)
-        
-        # Case 2: Difference between a date array and a single date
-        if isinstance(dates1, pd.Series) or isinstance(dates1, pd.DatetimeIndex):
-            dates1_np = dates1.to_numpy()
-            dates2_np = pd.to_datetime(dates2).to_numpy()  # Convert target date to numpy
-            return abs((dates1_np - dates2_np).astype('timedelta64[D]').astype(int))
+print(time.time())
+# Load the CSV file into a DataFrame
+data = pd.read_csv("data/landsea_04.csv")
 
-    # Case 3: Difference between dates in an array (matrix form)
-    dates1_np = dates1.to_numpy()  # Convert dates array to numpy array
-    date_diff_matrix = (dates1_np[:, None] - dates1_np[None, :]).astype('timedelta64[D]').astype(int)
-    
-    return abs(date_diff_matrix)
+# Extract coordinates and create a KDTree
+coordinates = list(zip(data['Latitude'], data['Longitude']))
+kdtree = KDTree(coordinates)
 
-# Example usage
+def is_land_or_ocean(lat, lon):
+    _, idx = kdtree.query((lat, lon))
+    return 'ocean' if int(data.iloc[idx]['Bottom_Standard_level'])==0 else 'land'
 
-# Case 1: Difference between two dates
-date1 = '2023-10-15'
-date2 = '2023-10-10'
-diff_1 = date_difference(date1, date2)
-print(f"Difference between {date1} and {date2}: {diff_1} days")
+# Test the function
+lat, lon = 60, 40.125  # Example input coordinates
+result = is_land_or_ocean(lat, lon)
+print(result)
 
-# Case 2: Difference between a date array and a single date
-date_array = ['2023-10-01', '2023-10-05', '2023-10-10', '2023-10-20']
-target_date = '2023-10-15'
-diff_2 = date_difference(date_array, target_date)
-print(f"Difference between {date_array} and {target_date}: {diff_2} days")
+# if result == 1:
+#     print("The point is on land.")
+# else:
+#     print("The point is in the ocean.")
 
-# Case 3: Difference between dates in an array (matrix form)
-diff_3 = date_difference(date_array)
-print(f"Matrix of differences between dates in {date_array}:\n{diff_3}")
-
+print(time.time())

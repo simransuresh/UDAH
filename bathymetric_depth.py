@@ -34,4 +34,7 @@ tree = cKDTree(points)
 # sqrt(neg) will give err)
 def nearest_depth(target_lat, target_lon):
     _, idx = tree.query([target_lat, target_lon])
-    return z.flatten()[idx]/1000
+    return -z.flatten()[idx]/1000
+
+# print(nearest_depth(53.536837, 8.583578))
+# print(nearest_depth(53.539541, 8.572399))

@@ -44,8 +44,8 @@ def PV(latd, lond, latg, long):
     grid_coords = np.column_stack((latg, long))  # Shape should be (M, 2)
 
     # Compute nearest bathymetric depth for given data or grid points
-    Zd = np.array([-nearest_depth(data_coords[:, 0][idx], data_coords[:, 1][idx]) for idx in range(len(data_coords[:, 0]))])  # Depth at data points
-    Zg = np.array([-nearest_depth(grid_coords[:, 0][idx], grid_coords[:, 1][idx]) for idx in range(len(grid_coords[:, 0]))])  # Depth at data points
+    Zd = np.array([nearest_depth(data_coords[:, 0][idx], data_coords[:, 1][idx]) for idx in range(len(data_coords[:, 0]))])  # Depth at data points
+    Zg = np.array([nearest_depth(grid_coords[:, 0][idx], grid_coords[:, 1][idx]) for idx in range(len(grid_coords[:, 0]))])  # Depth at data points
 
     # Compute potential vorticity matrix using broadcasting
     PV_matrix = np.abs(fd[:, None]/Zd[:, None] - fg/Zg) / np.sqrt((fd[:, None]/Zd[:, None])**2 + (fg/Zg)**2)

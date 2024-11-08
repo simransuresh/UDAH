@@ -8,8 +8,8 @@ from datetime import datetime
 from scipy import interpolate
 import csv
 
-print('Reading all hydrographic data...')
-hydr_data = {}
+# print('Reading all hydrographic data...')
+# hydr_data = {}
 
 def read_data(fname, hydr_data):
     data = pd.read_csv(fname)
@@ -41,65 +41,67 @@ def read_data(fname, hydr_data):
     # print(hydr_data)
     return hydr_data
 
-hydr_data = read_data('../2011.csv', hydr_data)
-hydr_data = read_data('../2012.csv', hydr_data)
-hydr_data = read_data('../2013.csv', hydr_data)
-hydr_data = read_data('../2014.csv', hydr_data)
-hydr_data = read_data('../2015.csv', hydr_data)
-hydr_data = read_data('../2016.csv', hydr_data)
-hydr_data = read_data('../2017.csv', hydr_data)
-hydr_data = read_data('../2018.csv', hydr_data)
-print('Done reading all hydrographic data...')
+# hydr_data = read_data('data/2011.csv', hydr_data)
+# hydr_data = read_data('data/2012.csv', hydr_data)
+# hydr_data = read_data('data/2013.csv', hydr_data)
+# hydr_data = read_data('data/2014.csv', hydr_data)
+# hydr_data = read_data('data/2015.csv', hydr_data)
+# hydr_data = read_data('data/2016.csv', hydr_data)
+# hydr_data = read_data('data/2017.csv', hydr_data)
+# hydr_data = read_data('data/2018.csv', hydr_data)
+# print('Done reading all hydrographic data...')
 
-def get_g(lat):
-    # Define constants
-    g0 = 9.780327  # Standard gravity at the equator in m/s^2
-    phi = np.radians(lat) 
-    g = g0 * (1 + 0.0053024 * np.sin(phi)**2 - 0.0000058 * np.sin(2 * phi)**2)
-    return g
+# def get_g(lat):
+#     # Define constants
+#     g0 = 9.780327  # Standard gravity at the equator in m/s^2
+#     phi = np.radians(lat) 
+#     g = g0 * (1 + 0.0053024 * np.sin(phi)**2 - 0.0000058 * np.sin(2 * phi)**2)
+#     return g
 
-fp = open('dh_2011_2018.csv', 'w+', newline='')
-writer = csv.writer(fp, delimiter=',')
-writer.writerow(['Datetime','Latitude','Longitude','Dynamic_height'])
+# fp = open('dh_2011_2018.csv', 'w+', newline='')
+# writer = csv.writer(fp, delimiter=',')
+# writer.writerow(['Datetime','Latitude','Longitude','Dynamic_height'])
 
 
-############## using specific volume anomaly method 
-# for each latlon compute the dynamic height using t, s, p and absolute ssh 
-i=0
-for latlon,data in hydr_data.items():
+# ############## using specific volume anomaly method 
+# # for each latlon compute the dynamic height using t, s, p and absolute ssh 
+# i=0
+# for latlon,data in hydr_data.items():
     
-    # interpolate upto 400m depth for each 2m step
-    D = [d for d in data['dept'] if d<=400]
-    T = [data['temp'][idx] for idx in range(len(D))]
-    S = [data['sali'][idx] for idx in range(len(D))]
-    P = [data['pres'][idx] for idx in range(len(D))]
-    
-    if len(D) > 0:
-        xdept = np.linspace(0,400,201)
-        ytemp = interpolate.interp1d(D, T, fill_value='extrapolate')(xdept)
-        ysali = interpolate.interp1d(D, S, fill_value='extrapolate')(xdept)
-        ypres = interpolate.interp1d(D, P, fill_value='extrapolate')(xdept)
+#     if max(data['dept']) > 500:
+#         # interpolate upto 400m depth for each 2m step
+#         D = [d for d in data['dept'] if d<=400]
+#         T = [data['temp'][idx] for idx in range(len(D))]
+#         S = [data['sali'][idx] for idx in range(len(D))]
+#         P = [data['pres'][idx] for idx in range(len(D))]
         
-        SA = gsw.SA_from_SP(ysali, ypres, latlon[1], latlon[0])
-        CT = gsw.CT_from_t(SA, ytemp, ypres)
-        
-        try:  
-            # Integrate specific volume anomaly to compute dynamic height https://www.teos-10.org/pubs/gsw/html/gsw_geo_strf_dyn_height.html
-            dyn_height_anom = gsw.geostrophy.geo_strf_dyn_height(SA, CT, ypres, p_ref=400)
-            ster_height = dyn_height_anom[0] / get_g(latlon[0]) 
+#         if len(D) > 0:
+#             xdept = np.linspace(0,400,201)
+#             ytemp = interpolate.interp1d(D, T, fill_value='extrapolate')(xdept)
+#             ysali = interpolate.interp1d(D, S, fill_value='extrapolate')(xdept)
+#             ypres = interpolate.interp1d(D, P, fill_value='extrapolate')(xdept)
             
-            # DOT or absolute ssh is the dynamic height at the surface pressure 0dbar
-            hydr_data[latlon]['ssh'] = ster_height
-            print('Setting steric height...', hydr_data[latlon]['ssh'])
-            
-        except ValueError as err:
-            print('Setting DH to nan due to error...')
-            hydr_data[latlon]['ssh'] = None
-            i=i+1
-        writer.writerow([hydr_data[latlon]['dt'],latlon[0],latlon[1],hydr_data[latlon]['ssh']])
+#             SA = gsw.SA_from_SP(ysali, ypres, latlon[1], latlon[0])
+#             CT = gsw.CT_from_t(SA, ytemp, ypres)
         
-print(i) 
-fp.close()
+#             try:  
+#                 # Integrate specific volume anomaly to compute dynamic height https://www.teos-10.org/pubs/gsw/html/gsw_geo_strf_dyn_height.html
+#                 dyn_height_anom = gsw.geostrophy.geo_strf_dyn_height(SA, CT, ypres, p_ref=400)
+#                 ster_height = dyn_height_anom[0] / get_g(latlon[0]) 
+                
+#                 # DOT or absolute ssh is the dynamic height at the surface pressure 0dbar
+#                 hydr_data[latlon]['ssh'] = ster_height
+#                 print('Setting steric height...', hydr_data[latlon]['ssh'])
+                
+#             except ValueError as err:
+#                 print('Setting DH to nan due to error...')
+#                 hydr_data[latlon]['ssh'] = None
+#                 i=i+1
+                
+#         writer.writerow([hydr_data[latlon]['dt'],latlon[0],latlon[1],hydr_data[latlon]['ssh']])
+        
+# print(i) 
+# fp.close()
 
 def plot_dh(hydr_data, year):
     ####### plot dh of hydrographic data
@@ -110,9 +112,12 @@ def plot_dh(hydr_data, year):
     ax.add_feature(cfeature.LAND, zorder=0, edgecolor='black')
     ax.add_feature(cfeature.COASTLINE, zorder=0, edgecolor='black')
 
-    lats = np.array([latlon[0] for latlon in hydr_data.keys()])
-    lons = np.array([latlon[1] for latlon in hydr_data.keys()])
-    ssh = np.array([hydr_data[(lats[idx], lons[idx])]['ssh'] for idx in range(len(lats))])
+    # lats = np.array([latlon[0] for latlon in hydr_data.keys()])
+    # lons = np.array([latlon[1] for latlon in hydr_data.keys()])
+    # ssh = np.array([hydr_data[(lats[idx], lons[idx])]['ssh'] for idx in range(len(lats))])
+    lats = hydr_data['Latitude']
+    lons = hydr_data['Longitude']
+    ssh = hydr_data['Dynamic_height']
     print('Max, Min:', max(ssh), min(ssh))
 
     # Plot the scatter 
@@ -127,7 +132,7 @@ def plot_dh(hydr_data, year):
     # plt.title('Dynamic height in', year)
     # plt.show()
 
-    plt.savefig(f'dh_{year}_400m.png', dpi=300)    
+    plt.savefig(f'dh_{year}_deep.png', dpi=300)    
     
 # plot_dh(hydr_data, '2011')      
 # # plot_dh(hydr_data, '2012')      
@@ -136,5 +141,7 @@ def plot_dh(hydr_data, year):
 # # plot_dh(hydr_data, '2015')      
 # # plot_dh(hydr_data, '2016')      
 # # plot_dh(hydr_data, '2017')      
-# # plot_dh(hydr_data, '2018')      
+# # plot_dh(hydr_data, '2018')    
+
+hydr_data = pd.read_csv('results/dh_2011_2018.csv') 
 plot_dh(hydr_data, '2011_2018')      
