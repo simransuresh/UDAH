@@ -80,17 +80,6 @@ def tdiff(dates1, dates2=None):
     
     return np.abs(date_diff_matrix)
 
-# def dist_pt(lat1, lon1, lat2, lon2):
-#     lat1 = (lat1 + 90) % 180 - 90
-#     lat2 = (lat2 + 90) % 180 - 90
-#     lon1 = (lon1 + 180) % 360 - 180
-#     lon2 = (lon2 + 180) % 360 - 180
-#     return geodesic((lat1, lon1), (lat2, lon2)).kilometers
-
-# # Compute distances between data points (Cdd) and between data points and target grid points (Cdg)
-# def dist_mat(t1, t2):
-#     return cdist(np.radians(t1), np.radians(t2), lambda u, v: 2 * 6371.0 * np.arcsin(
-#     np.sqrt(np.sin((u[0] - v[0]) / 2)**2 + np.cos(u[0]) * np.cos(v[0]) * np.sin((u[1] - v[1]) / 2)**2) ) )
     
 dp = pd.read_csv('results/depth_500m.csv')
 depth_info = {
