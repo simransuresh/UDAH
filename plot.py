@@ -5,49 +5,58 @@ import cartopy.crs as ccrs
 from scipy.spatial import KDTree
 
 ###### NOTE plotting gridded UDAH data
-# landmask_data = pd.read_csv("data/landsea_04.csv")
-# landmask_coordinates = list(zip(landmask_data['Latitude'], landmask_data['Longitude']))
-# kdtree = KDTree(landmask_coordinates)
+# main_data1 = pd.read_csv("results/grd_dh_2012_01.csv")
+df = pd.read_csv("results/grd_dh_2011_01_final.csv")
+dh = df['Dynamic_Height']
 
-# def is_land_or_ocean(lat, lon):
-#     _, idx = kdtree.query((lat, lon))
-#     depth = landmask_data.iloc[idx]['Bottom_Standard_level']
-#     return 'land' if depth == 1 else 'ocean'
+# for idx, row in  enumerate(main_data1['Latitude']):
+#     if main_data1['Longitude'][idx]>-20 and main_data1['Longitude'][idx]<98 and main_data1['Latitude'][idx]<82: # remove Fram strait from mapping
+#         main_data1['Dynamic_Height'][idx] = np.nan
+#         main_data1['DH_error'][idx] = np.nan
 
-# main_data1 = pd.read_csv("results/grid_dh_20110901_1.csv")
-# main_data1['Land_Or_Ocean'] = main_data1.apply(lambda row: is_land_or_ocean(row['Latitude'], row['Longitude']), axis=1)
-# main_data2 = pd.read_csv("results/grid_dh_20110901_2.csv")
-# main_data2['Land_Or_Ocean'] = main_data2.apply(lambda row: is_land_or_ocean(row['Latitude'], row['Longitude']), axis=1)
+# for idx, row in  enumerate(df['Latitude']):
+#     if df['Longitude'][idx]>-20 and df['Longitude'][idx]<80 and df['Latitude'][idx]<82: # remove Fram strait from mapping
+#         df['Depth'][idx] = np.nan
+#     if df['Longitude'][idx]>-90 and df['Longitude'][idx]<0 and df['Latitude'][idx]<80:
+#         df['Depth'][idx] = np.nan
 
-main_data1 = pd.read_csv("results/gridded_dh_2012_01.csv")
-lat = main_data1['Latitude']
-lon = main_data1['Longitude']
-dh = main_data1['DH_error']
-# lat = np.concatenate((main_data1['Latitude'], main_data2['Latitude'])).reshape(121, 480)[:113, :]
-# lon = np.concatenate((main_data1['Longitude'], main_data2['Longitude'])).reshape(121, 480)[:113, :]
-# dh = np.concatenate((main_data1['Dynamic_Height'], main_data2['Dynamic_Height'])).reshape(121, 480)[:113, :]
+# # df.to_csv('filt_depth.csv', index=False)
+# # Drop rows with any NaN values and save to a new CSV file
+# df.dropna().to_csv('data_points.csv', index=False)
 
+# # Count rows where all columns have non-NaN values
+# count_no_nan = (df.notna().all(axis=1)).sum()
+# print(f"Number of rows with no NaN values: {count_no_nan}")
+
+# lat = np.array(df['Latitude']).reshape(121, 480)[:113, :]
+# lon = np.array(df['Longitude']).reshape(121, 480)[:113, :]
+# dh = np.array(df['Dynamic_Height']).reshape(121, 480)[:113, :]
+# dhe = np.array(df['DH_error']).reshape(121, 480)[:113, :]
+   
 # from read_sla_currents import mdt, temp_mean_sla, sla, ug, vg
 # dot = mdt + sla + temp_mean_sla
-# dot = dot[12, :, :]  # sept 2011 month index in SAGA
-# ug = ug[12, :, :]
-# vg = vg[12, :, :]
+# dot = dot[8, :, :]  # sept 2011 month index in SAGA
+# ug = ug[8, :, :]
+# vg = vg[8, :, :]   # TODO compare by populating with np.nan mat and filling with val at filt grd points
 
 # final = np.abs(dh - dot)
-           
+                   
+print(np.nanmin(dh), np.nanmax(dh))
+
 fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': ccrs.NorthPolarStereo()})
 # ax.set_extent([-160, -120, 65, 85], ccrs.PlateCarree())
-ax.set_extent([-180, 180, 60, 90], ccrs.PlateCarree())
+ax.set_extent([-180, 180, 70, 90], ccrs.PlateCarree())
 
 ax.coastlines()
 ax.gridlines(draw_labels=True)
 
-scatter = ax.scatter(lon, lat, c=dh, cmap='YlGnBu', s=10, transform=ccrs.PlateCarree(), vmin=0, vmax=1.2)
+# scatter = ax.scatter(lon, lat, c=final, cmap='YlGnBu', s=10, transform=ccrs.PlateCarree(), vmin=0, vmax=1.2)
+scatter = ax.scatter(df['Longitude'], df['Latitude'], c=dh, cmap='gist_rainbow', s=10, transform=ccrs.PlateCarree(), vmin=0, vmax=1)
 cbar = plt.colorbar(scatter, ax=ax, orientation='vertical', label='Difference in DH and DOT [m]')
 
 # ax.set_title("Dynamic Height of Arctic ocean from hydrographic observations 2011-2018")
 plt.show()
-# plt.savefig('figures/dh_dot_diff.png')
+# plt.savefig('figures/grd_dh_201101_final.png')
 
 
 ########## NOTE plotting all dynamic height from UDAH

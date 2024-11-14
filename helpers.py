@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.spatial import cKDTree
-from scipy.spatial.distance import cdist
-from bathymetric_depth import nearest_depth
 from geopy.distance import geodesic
 import pandas as pd
 
@@ -14,6 +12,7 @@ def noise(obs_coords, Od, n):
     # Finding noise between a data point with its nearest neighbour using k-d tree
     tree = cKDTree(np.array(obs_coords))
     n2 = 0
+    
     for i, point in enumerate(obs_coords):
         dist, idx = tree.query(point, k=2)  # k=2 because the closest point to a point is itself
         nearest_idx = idx[1]  # idx[0] is the point itself, idx[1] is the nearest neighbor
@@ -21,37 +20,36 @@ def noise(obs_coords, Od, n):
         
     return n2/(2*n)
 
-def dist_pt(lat1, lon1, lat2, lon2):
-    lat1 = (lat1 + 90) % 180 - 90
-    lat2 = (lat2 + 90) % 180 - 90
-    lon1 = (lon1 + 180) % 360 - 180
-    lon2 = (lon2 + 180) % 360 - 180
-    return geodesic((lat1, lon1), (lat2, lon2)).kilometers
-
-# Compute distances between data points (Cdd) and between data points and target grid points (Cdg)
-def dist_mat(t1, t2):
-    return cdist(np.radians(t1), np.radians(t2), lambda u, v: 2 * 6371.0 * np.arcsin(
-    np.sqrt(np.sin((u[0] - v[0]) / 2)**2 + np.cos(u[0]) * np.cos(v[0]) * np.sin((u[1] - v[1]) / 2)**2) ) )
+def D_mat(subset, target=None):
+    if type(subset)==tuple: # 2 point distance for selection
+        return geodesic(subset, target).km
     
-# Define the PV function to handle arrays for efficient calculation
-def PV(latd, lond, latg, long):
+    if target is not None:  # between grid and data points
+        return np.array([ 
+            geodesic(point, target).km for point in subset
+        ])
+
+    return np.array([ [     # between data points
+        geodesic(subset[i], subset[j]).km for j in range(len(subset)) ] 
+        for i in range(len(subset))
+    ])
+    
+def PV_mat(latd, lond, latg, long, depth_info):
     # Compute Coriolis force for data points and grid points
-    fd = 2 * 7.29e-5 * np.sin(np.deg2rad(latd))
-    fg = 2 * 7.29e-5 * np.sin(np.deg2rad(latg))
+    fd = 2 * 7.29e-5 * np.sin(np.deg2rad(latd))  # Coriolis force at data points
+    fg = 2 * 7.29e-5 * np.sin(np.deg2rad(latg))  # Coriolis force at grid points
 
-    # Ensure latitude and longitude pairs are in the correct shape for the nearest depth calculation
-    data_coords = np.column_stack((latd, lond))  # Shape should be (N, 2)
-    grid_coords = np.column_stack((latg, long))  # Shape should be (M, 2)
+    # Ensure latitude and longitude pairs are in the correct shape for depth lookup
+    data_coords = np.column_stack((latd, lond))  # Shape (N, 2)
+    grid_coords = np.column_stack((latg, long))  # Shape (M, 2)
 
-    # Compute nearest bathymetric depth for given data or grid points
-    Zd = np.array([nearest_depth(data_coords[:, 0][idx], data_coords[:, 1][idx]) for idx in range(len(data_coords[:, 0]))])  # Depth at data points
-    Zg = np.array([nearest_depth(grid_coords[:, 0][idx], grid_coords[:, 1][idx]) for idx in range(len(grid_coords[:, 0]))])  # Depth at data points
+    # Retrieve bathymetric depth for data points and grid point using depth_info
+    Zd = np.array([depth_info[(lat, lon)]['depth'] for lat, lon in data_coords])  # Depth at data points, shape (N,)
+    Zg = np.array([depth_info[(lat, lon)]['depth'] for lat, lon in grid_coords])  # Depth at grid point(s), shape (M,)
 
-    # Compute potential vorticity matrix using broadcasting
-    PV_matrix = np.abs(fd[:, None]/Zd[:, None] - fg/Zg) / np.sqrt((fd[:, None]/Zd[:, None])**2 + (fg/Zg)**2)
-
-    return PV_matrix
-
+    # Calculate PV matrix between all data points (n x n)
+    return np.abs(fd[:, None] / Zd[:, None] - fg / Zg) / np.sqrt((fd[:, None] / Zd[:, None])**2 + (fg / Zg)**2)
+ 
 # Function to compute covariance based on distance and PV
 def covar1(D, PV, s2, L, phi):
     return s2 * np.exp(-(D / L)**2 - (PV / phi)**2)
@@ -81,3 +79,33 @@ def tdiff(dates1, dates2=None):
     date_diff_matrix = (dates1_np[:, None] - dates1_np[None, :]).astype('timedelta64[D]').astype(int)
     
     return np.abs(date_diff_matrix)
+
+    
+dp = pd.read_csv('results/depth_500m.csv')
+depth_info = {
+    (row['Latitude'], row['Longitude']): {
+        'depth': row['Depth'],
+    }
+    for _, row in dp.iterrows()
+}
+
+# D_mat(subset=[(82.21415, 39.16856), (82.22155, 39.376728), (82.29131, 39.610153)], target=)
+# subset=[(82.21415, 39.16856), (82.22155, 39.376728), (82.29131, 39.610153)]
+# latg = 82.25
+# long = 39.75
+# distances_dd = D_mat(subset)
+# # print(distances_dd)
+# distances_dg = D_mat(subset, target=(latg, long))
+# print(distances_dg)
+# print(dist_pt(82.21415, 39.16856, 82.22155, 39.376728))
+
+# given_lats = [lat for lat, lon in subset]
+# given_lons = [lon for lat, lon in subset]
+
+# pv_dd = PV_mat(given_lats, given_lons, given_lats, given_lons, depth_info)
+# pv_dg = PV_mat(given_lats, given_lons, latg, long, depth_info)
+
+# print(pv_dd, pv_dg)
+# print(tdiff('2011-01-01', '2012-01-02'))
+# print(tdiff(['2011-01-01', '2011-02-01'], '2012-01-02'))
+# print(tdiff(['2011-01-01', '2011-02-01', '2012-01-02']))
