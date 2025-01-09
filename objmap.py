@@ -14,14 +14,10 @@ T = 60
 
 # first all profiles from dynamic_height.py -> dh_2011_2018_deep.csv
 # dp = pd.read_csv('data_points.csv') -> only points within CAO
-dp = pd.read_csv('all_500m.csv')  # takes all >500m profiles for mapping grid points within CAO
-
+dp = pd.read_csv('data_500m.csv')  # takes all >500m profiles for mapping grid points within CAO
+dp = dp.dropna(subset=['Datetime','Surf_DH'])   # hFW, D_Siso
 hydr_data = {
-    (row['Latitude'], row['Longitude']): {
-        'depth': row['Depth'],
-        'dt': row['Datetime'] if row['Datetime']!='' else np.nan, 
-        'dh': float(row['Dynamic_height']) if row['Dynamic_height']!='' else np.nan
-    }
+    (row['Latitude'], row['Longitude']): { 'depth': row['Depth'], 'dt': row['Datetime'], 'dh': float(row['Surf_DH'])}
     for _, row in dp.iterrows()
 }
 
@@ -53,9 +49,10 @@ def objmap(latg, long, tg):
     # print('#### ----- objective mapping started for the grid.....', latg, long, tg)
 
     ####### get data points 
-    subset1 = [ll for ll, val in hydr_data.items() # take points within L1 radius, within +-3yrs
-               if D_mat(ll, target=(latg, long)) <= L1 and tdiff(val['dt'], tg) <= 1095 and \
-                math.isnan(val['dh']) is False]   
+    subset1 = [ll for ll, val in hydr_data.items() # take points within L1 radius, within +-3yrs, seasonal months only
+               if D_mat(ll, target=(latg, long)) <= L1 and \
+                tdiff(val['dt'], tg) <= 1095 and \
+                pd.to_datetime(val['dt']).month in get_seas(pd.to_datetime(tg).month)]   
     # print(len(subset1))
     
     ###### pick data points for mapping
@@ -88,6 +85,9 @@ def objmap(latg, long, tg):
     if len(Od)==0 or Od is None:
         return np.nan, np.nan
     
+    if len(Od)==1:
+        return Od[0], np.nan
+    
     # print('######### STAGE 1 ############', L1, phi1)
 
     signal_variance = signal(Od, n)
@@ -110,15 +110,14 @@ def objmap(latg, long, tg):
     # print(Cdd.shape, Cdg.shape)
     
     Cdd += noise_variance * np.eye(Cdd.shape[0])
-    Od_mean = sum(Cdd@Od) / sum(sum(Cdd))
-    
+    Od_mean = sum(Cdd@Od) / sum(sum(Cdd)) if len(Od)>1 else Od[0]
+
     ### mapping procedure
-    mapped_height = np.linalg.solve(Cdd, Od-Od_mean) 
+    mapped_height = np.linalg.solve(Cdd, Od-Od_mean)
     Og1 = np.dot(Cdg.T, mapped_height) + Od_mean  
         
     Og1_error = np.sqrt(signal_variance - Cdg.T@Cdd@Cdg)
     # print("Og1:", Og1, Og1_error) 
-
 
     ######## stage2
     # print('######### STAGE 2 ############', L2, phi2, T)
@@ -137,10 +136,10 @@ def objmap(latg, long, tg):
     # print(Cdd.shape, Cdg.shape)
     
     Cdd += noise_variance * np.eye(Cdd.shape[0])
-    Od_mean = sum(Cdd@Od) / sum(sum(Cdd))
+    Od_mean = sum(Cdd@Od) / sum(sum(Cdd)) if len(Od)>1 else Od[0]
 
-    mapped_height = np.linalg.solve(Cdd, Od-Od_mean)  
-    Og2 = np.dot(Cdg.T, mapped_height) + Od_mean 
+    mapped_height = np.linalg.solve(Cdd, Od-Od_mean)
+    Og2 = np.dot(Cdg.T, mapped_height) + Od_mean  
     
     Og2_error = np.sqrt(signal_variance - Cdg.T@Cdd@Cdg)
     # print("Og2:", Og2, Og2_error) 
@@ -157,25 +156,38 @@ def objmap(latg, long, tg):
 # objmap(latg, long, tg)
 # objmap(87.5, 0, '2011-09-01')
 
-gp = pd.read_csv('grid_points.csv')
-t = '2011-01-01' #datetime(2011, 1, 1)
+###### TODO
+gp = pd.read_csv('grid_50km_nplaea.csv') 
+combined_results = pd.DataFrame()
 
-# output_file = "results/grd_dh_2011_01_wnn.csv"  # another run with distance sorted poiints selected within L1 L2
-output_file = "results/grd_dh_2011_01_final.csv"  # another run with weight function inclusive
-
-fp = open(output_file, mode='w', newline='') 
-writer = csv.writer(fp)
-writer.writerow(["Datetime", "Latitude", "Longitude", "Depth", "Dynamic_Height", "DH_error"])    
-
-for idx, row in gp.iterrows():
-    lat, lon = row['Latitude'], row['Longitude']
-    (Og, Og_err) = objmap(lat, lon, t)
+for month in range(1, 13):
+    # Set the current timestamp
+    t = f"2011-{month:02d}-01"
     
-    print(idx, row['Latitude'], row['Longitude'], time.time(), Og, Og_err)
-    writer.writerow([t, lat, lon, depth_info[(lat, lon)]['depth'], Og, Og_err])
+    # Update datetime and initialize columns for this month
+    gp['Datetime'] = t
+    gp['Surf_DH'] = np.full(len(gp), np.nan)
+    gp['Surf_DH_err'] = np.full(len(gp), np.nan)
     
-    # if idx==2:
-    #     break
+    # Iterate through rows to update values
+    for idx, row in gp.iterrows():
+        lat, lon, d = row['Latitude'], row['Longitude'], row['Depth']
+        Og, Og_err = objmap(lat, lon, t)
+        
+        # Update Surf_DH and Surf_DH_err
+        gp.at[idx, 'Surf_DH'] = Og
+        gp.at[idx, 'Surf_DH_err'] = Og_err
+        
+        print(idx, lat, lon, d, t, Og, Og_err)
+        
+        # Remove the break statement in production. Only for debugging:
+        # if idx == 10:
+        #     break
 
-fp.close()
-print(f"Results written to {output_file}")
+    # Append the current month's results to the combined DataFrame
+    combined_results = pd.concat([combined_results, gp], ignore_index=True)
+
+# Write the combined results to a single CSV file
+# combined_results.to_csv('grd_dh_2015_seas.csv', index=False)
+print("Results written")
+

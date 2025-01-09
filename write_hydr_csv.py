@@ -6,7 +6,7 @@ from datetime import datetime
 # filename AO_phys_oce_2011
 
 # read UDAH nc file 
-ds = nc.Dataset('data/AO_phys_oce_2018.nc', 'r')
+ds = nc.Dataset('data/UDAH/AO_phys_oce_2008.nc', 'r')
 
 dt = ds.variables['Date'][:,:]
 lon = ds.variables['Lon'][:]
@@ -15,14 +15,16 @@ pres = ds.variables['Pres'][:]    # in meters
 dept = ds.variables['Depth'][:]    # in meters
 temp = ds.variables['Temp'][:]    # in meters
 sal = ds.variables['Sal'][:]    # in meters
+n = len(lon)
+print(n)
 
 ds.close()
 
-fp = open('2018.csv', 'w+', newline='')
+fp = open('2008.csv', 'w+', newline='')
 writer = csv.writer(fp, delimiter=',')
 writer.writerow(['Datetime','Latitude','Longitude','Pressure','Depth', 'Temperature','Salinity'])
 
-for idx in range(1813824):
+for idx in range(n):
     # Convert the byte array to a string
     extracted_dt = ''.join([char.decode('utf-8') for char in dt[:, idx]])
 

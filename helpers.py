@@ -2,6 +2,65 @@ import numpy as np
 from scipy.spatial import cKDTree
 from geopy.distance import geodesic
 import pandas as pd
+from datetime import date, timedelta
+
+# gives seasonal months ie. to map for Dec, data points during Nov, Dec, Jan are taken
+def get_seas(month):
+    if month==1:
+        return 11, 12, 1, 2, 3
+    if month==2:
+        return 12, 1, 2, 3, 4
+    if month==11:
+        return 9, 10, 11, 12, 1
+    if month==12:
+        return 10, 11, 12, 1, 2
+
+    return month-2, month-1, month, month+1, month+2
+
+def convert_time(time):
+    reference_date = date(2011, 1, 1)
+    # time = days since 1st January 0000 at 00:00:00
+    offset_days = [day - time[0] for day in time]
+    # from ref, compute days in y-m format
+    time = [ (reference_date+timedelta(days=day) ).strftime('%Y-%m') for day in offset_days]
+    return time
+
+
+def get_g(lat):
+    # Define constants
+    g0 = 9.780327  # Standard gravity at the equator in m/s^2
+    phi = np.radians(lat) 
+    g = g0 * (1 + 0.0053024 * np.sin(phi)**2 - 0.0000058 * np.sin(2 * phi)**2)
+    return g
+
+
+def coriolis(lat):
+    # Earth rotation rate in rad/s
+    Omg = 7.2921e-5
+    return 2 * Omg * np.sin(np.radians(lat))
+
+def find_nearest_coords(lat, lon, df, min_distance=49, max_distance=51):
+    distances = []
+    
+    # Loop through each row in the dataframe to compute the distance
+    for idx, row in df.iterrows():
+        other_lat = row['Latitude']
+        other_lon = row['Longitude']
+        
+        # Skip comparing to the same point
+        if lat == other_lat and lon == other_lon:
+            continue
+        
+        # Compute distance using haversine
+        dist = D_mat((lat, lon), (other_lat, other_lon))
+        
+        if min_distance <= dist <= max_distance:
+            distances.append((idx, other_lat, other_lon, dist))  # Including index
+    
+    # Sort by distance and return the 4 nearest points (with index)
+    distances_sorted = sorted(distances, key=lambda x: x[3])  # Sort by distance (4th item)
+    
+    return distances_sorted[:4] # Return the top 4 nearest points
 
 # signal variance
 def signal(Od, n):
@@ -12,6 +71,9 @@ def noise(obs_coords, Od, n):
     # Finding noise between a data point with its nearest neighbour using k-d tree
     tree = cKDTree(np.array(obs_coords))
     n2 = 0
+    
+    if len(Od)==1:
+        return n2
     
     for i, point in enumerate(obs_coords):
         dist, idx = tree.query(point, k=2)  # k=2 because the closest point to a point is itself
@@ -79,33 +141,22 @@ def tdiff(dates1, dates2=None):
     date_diff_matrix = (dates1_np[:, None] - dates1_np[None, :]).astype('timedelta64[D]').astype(int)
     
     return np.abs(date_diff_matrix)
-
     
-dp = pd.read_csv('results/depth_500m.csv')
-depth_info = {
+dp = pd.read_csv('data_500m.csv')
+dp_depth = {
     (row['Latitude'], row['Longitude']): {
         'depth': row['Depth'],
     }
     for _, row in dp.iterrows()
 }
 
-# D_mat(subset=[(82.21415, 39.16856), (82.22155, 39.376728), (82.29131, 39.610153)], target=)
-# subset=[(82.21415, 39.16856), (82.22155, 39.376728), (82.29131, 39.610153)]
-# latg = 82.25
-# long = 39.75
-# distances_dd = D_mat(subset)
-# # print(distances_dd)
-# distances_dg = D_mat(subset, target=(latg, long))
-# print(distances_dg)
-# print(dist_pt(82.21415, 39.16856, 82.22155, 39.376728))
+gp = pd.read_csv('grid_50km_nplaea.csv')
+gp_depth = {
+    (row['Latitude'], row['Longitude']): {
+        'depth': row['Depth'],
+    }
+    for _, row in gp.iterrows()
+}
 
-# given_lats = [lat for lat, lon in subset]
-# given_lons = [lon for lat, lon in subset]
+depth_info = dp_depth | gp_depth
 
-# pv_dd = PV_mat(given_lats, given_lons, given_lats, given_lons, depth_info)
-# pv_dg = PV_mat(given_lats, given_lons, latg, long, depth_info)
-
-# print(pv_dd, pv_dg)
-# print(tdiff('2011-01-01', '2012-01-02'))
-# print(tdiff(['2011-01-01', '2011-02-01'], '2012-01-02'))
-# print(tdiff(['2011-01-01', '2011-02-01', '2012-01-02']))

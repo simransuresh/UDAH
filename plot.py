@@ -1,97 +1,210 @@
+from mpl_toolkits.basemap import Basemap
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-from scipy.spatial import KDTree
 
-###### NOTE plotting gridded UDAH data
-# main_data1 = pd.read_csv("results/grd_dh_2012_01.csv")
-df = pd.read_csv("results/grd_dh_2011_01_final.csv")
-dh = df['Dynamic_Height']
+df = pd.read_csv('grd_dh_2015.csv')
+df = df[df['Datetime']=='2015-12-01']
+X = df['X_meters'].values
+Y = df['Y_meters'].values
+lons = df['Longitude'].values
+lats = df['Latitude'].values
+dhs = df['Surf_DH'].values
+ug = df['ug'].values
+vg = df['vg'].values
+# hFW = df['hFW'].values
+# D_Siso = df['D_Siso'].values
 
-# for idx, row in  enumerate(main_data1['Latitude']):
-#     if main_data1['Longitude'][idx]>-20 and main_data1['Longitude'][idx]<98 and main_data1['Latitude'][idx]<82: # remove Fram strait from mapping
-#         main_data1['Dynamic_Height'][idx] = np.nan
-#         main_data1['DH_error'][idx] = np.nan
+print(df.head)
 
-# for idx, row in  enumerate(df['Latitude']):
-#     if df['Longitude'][idx]>-20 and df['Longitude'][idx]<80 and df['Latitude'][idx]<82: # remove Fram strait from mapping
-#         df['Depth'][idx] = np.nan
-#     if df['Longitude'][idx]>-90 and df['Longitude'][idx]<0 and df['Latitude'][idx]<80:
-#         df['Depth'][idx] = np.nan
+#### Plot dh
+# m = Basemap(projection='nplaea', boundinglat=70, lon_0=0, resolution='l', round=True)
 
-# # df.to_csv('filt_depth.csv', index=False)
-# # Drop rows with any NaN values and save to a new CSV file
-# df.dropna().to_csv('data_points.csv', index=False)
+# fig, ax = plt.subplots(figsize=(8, 8))
+# m.drawcoastlines(linewidth=1.2)
+# m.drawparallels([80], labels=[True], linewidth=0.5, color='gray', fontsize=6)
+# m.drawmeridians([-180, -90, 0, 90], labels=[True, True, True, True], linewidth=0.5, color='gray', fontsize=6)
 
-# # Count rows where all columns have non-NaN values
-# count_no_nan = (df.notna().all(axis=1)).sum()
-# print(f"Number of rows with no NaN values: {count_no_nan}")
+# x, y = m(lons, lats)
+# sc = m.scatter(x, y, s=20, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
 
-# lat = np.array(df['Latitude']).reshape(121, 480)[:113, :]
-# lon = np.array(df['Longitude']).reshape(121, 480)[:113, :]
-# dh = np.array(df['Dynamic_Height']).reshape(121, 480)[:113, :]
-# dhe = np.array(df['DH_error']).reshape(121, 480)[:113, :]
-   
-# from read_sla_currents import mdt, temp_mean_sla, sla, ug, vg
-# dot = mdt + sla + temp_mean_sla
-# dot = dot[8, :, :]  # sept 2011 month index in SAGA
-# ug = ug[8, :, :]
-# vg = vg[8, :, :]   # TODO compare by populating with np.nan mat and filling with val at filt grd points
+# cbar = plt.colorbar(sc, ax=ax, shrink=0.7)
+# cbar.set_label("Dynamic height (m)")
 
-# final = np.abs(dh - dot)
-                   
-print(np.nanmin(dh), np.nanmax(dh))
-
-fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': ccrs.NorthPolarStereo()})
-# ax.set_extent([-160, -120, 65, 85], ccrs.PlateCarree())
-ax.set_extent([-180, 180, 70, 90], ccrs.PlateCarree())
-
-ax.coastlines()
-ax.gridlines(draw_labels=True)
-
-# scatter = ax.scatter(lon, lat, c=final, cmap='YlGnBu', s=10, transform=ccrs.PlateCarree(), vmin=0, vmax=1.2)
-scatter = ax.scatter(df['Longitude'], df['Latitude'], c=dh, cmap='gist_rainbow', s=10, transform=ccrs.PlateCarree(), vmin=0, vmax=1)
-cbar = plt.colorbar(scatter, ax=ax, orientation='vertical', label='Difference in DH and DOT [m]')
-
-# ax.set_title("Dynamic Height of Arctic ocean from hydrographic observations 2011-2018")
-plt.show()
-# plt.savefig('figures/grd_dh_201101_final.png')
+# plt.savefig('Sep2015_seas.png', dpi=300)
 
 
-########## NOTE plotting all dynamic height from UDAH
-# import pandas as pd
-# import matplotlib.pyplot as plt
-# import cartopy.crs as ccrs
-# import cartopy.feature as cfeature
+##### plot gsc 
+# m = Basemap(projection='nplaea', boundinglat=70, lon_0=0, resolution='l', round=True)
 
-# # Load the CSV file
-# file_path = 'results/dh_2011_2018.csv'  # Update this path
-# data = pd.read_csv(file_path)
+# fig, ax = plt.subplots(figsize=(8, 8))
+# m.drawcoastlines(linewidth=1.2)
+# m.drawparallels([80], labels=[True], linewidth=0.5, color='gray', fontsize=6)
+# m.drawmeridians([-180, -90, 0, 90], labels=[True, True, True, True], linewidth=0.5, color='gray', fontsize=6)
 
-# # Convert Datetime to datetime format
-# data['Datetime'] = pd.to_datetime(data['Datetime'])
+# x, y = m(lons, lats)
+# sc = m.scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
 
-# # Filter data for the year 2011
-# data_2011 = data[data['Datetime'].dt.year == 2011]
+# cbar = plt.colorbar(sc, ax=ax, shrink=0.7)
+# cbar.set_label("Dynamic height (m)")
 
-# # Plotting the dynamic height for 2011 in a North Polar Stereographic projection
-# fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={'projection': ccrs.NorthPolarStereo()})
+# # calculate scale based on ug vg values for quiver
+# velocity_magnitude = np.sqrt(ug**2 + vg**2)
+# max_velocity = np.nanmax(velocity_magnitude)
+# scale = max_velocity / 0.05
+# print(max_velocity, scale)
 
-# # Step 5: Set map boundaries and limits
-# ax.set_extent([-180, 180, 60, 90], ccrs.PlateCarree())
+# Q = m.quiver(x, y, ug, vg, scale=scale, width=0.003)
+# qk = plt.quiverkey(Q, 0.1, 0.1, 0.1, '10 cm/s', labelpos='W')
 
-# # Add coastlines, gridlines, and labels
-# ax.coastlines()
-# ax.gridlines(draw_labels=True)
+# plt.show()
+# plt.savefig('2012_08_gsc.png', dpi=300)
 
-# # Step 6: Plot the dynamic height data
-# scatter = ax.scatter(data_2011['Longitude'], data_2011['Latitude'], c=data_2011['Dynamic_height'], cmap='YlGnBu', s=10, transform=ccrs.PlateCarree(), vmin=0, vmax=1.2)
 
-# # Add a color bar to represent dynamic height values
-# cbar = plt.colorbar(scatter, ax=ax, orientation='vertical', label='Dynamic Height [m]')
+# #### plot all fw/diso of all data points
+# df = pd.read_csv('data_500m_fw.csv')
+# lats = df['Latitude'].values
+# lons = df['Longitude'].values
+# hfw = df['hFW'].values
+# diso = df['D_Siso'].values
 
-# # Title and display the plot
-# ax.set_title("Dynamic Height of Arctic ocean 2011")
-# plt.savefig('figures/dh_hydr_obs_2011.png')
+# m = Basemap(projection='nplaea', boundinglat=70, lon_0=0, resolution='l', round=True)
+
+# fig, ax = plt.subplots(figsize=(8, 8))
+# m.drawcoastlines(linewidth=1.2)
+# m.drawparallels([80], labels=[True], linewidth=0.5, color='gray', fontsize=6)
+# m.drawmeridians([-180, -90, 0, 90], labels=[True, True, True, True], linewidth=0.5, color='gray', fontsize=6)
+
+# x, y = m(lons, lats)
+# print(min(diso), max(diso))
+
+# sc = m.scatter(x, y, s=10, c=diso, cmap='jet', vmin=50, vmax=300)
+# sc = m.scatter(x, y, s=10, c=hfw, cmap='jet', vmin=0, vmax=25)
+
+# cbar = plt.colorbar(sc, ax=ax, shrink=0.7)
+# cbar.set_label("Depth of 34 isohaline (m)")
+# plt.show()
+# plt.savefig('diso_2011_2018.png', dpi=300)
+
+
+####### Plot mapped hfw/disoh
+# m = Basemap(projection='nplaea', boundinglat=70, lon_0=0, resolution='l', round=True)
+
+# fig, ax = plt.subplots(figsize=(8, 8))
+# m.drawcoastlines(linewidth=1.2)
+# m.drawparallels([80], labels=[True], linewidth=0.5, color='gray', fontsize=6)
+# m.drawmeridians([-180, -90, 0, 90], labels=[True, True, True, True], linewidth=0.5, color='gray', fontsize=6)
+
+# x, y = m(lons, lats)
+# # print(min(hFW), max(hFW))
+# print(min(D_Siso), max(D_Siso))
+
+# sc = m.scatter(x, y, s=20, c=D_Siso, cmap='jet', vmin=30, vmax=250)
+# # sc = m.scatter(x, y, s=20, c=hFW, cmap='jet', vmin=0, vmax=25)
+
+# cbar = plt.colorbar(sc, ax=ax, shrink=0.7)
+# cbar.set_label("Depth of 34 isohaline (m)")
 # # plt.show()
+# plt.savefig('figures/2012_01_disoh.png', dpi=300)
+
+
+##### plot monthly gsc 
+# fig, axes = plt.subplots(2, 6, figsize=(16, 8))
+# plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, hspace=0.1, wspace=0.05)
+
+# for ax in axes.flatten():
+#     m = Basemap(projection='nplaea', ax=ax, boundinglat=70, lon_0=0, resolution='l', round=True)
+#     m.drawcoastlines(linewidth=1.2)
+#     m.drawmeridians([-180, -90, 0, 90], linewidth=0.5, color='gray', fontsize=6)
+#     x, y = m(lons, lats)
+
+# df = pd.read_csv('results/grd_dh_201.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[0,0].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[0,0].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_02.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[0,1].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[0,1].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_03.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[0,2].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[0,2].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_04.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[0,3].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[0,3].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_05.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[0,4].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[0,4].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_06.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[0,5].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[0,5].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_07.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[1,0].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[1,0].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_08.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[1,1].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[1,1].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_09.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[1,2].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[1,2].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_10.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[1,3].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[1,3].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_11.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[1,4].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[1,4].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# df = pd.read_csv('results/grd_dh_2012_12.csv')
+# dhs, ug, vg = df['Surf_DH'], df['ug'], df['vg']
+# sc = axes[1,5].scatter(x, y, s=30, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.05
+# Q = axes[1,5].quiver(x, y, ug, vg, scale=scale, width=0.003)
+# print(np.mean(dhs), np.mean(np.sqrt(ug**2 + vg**2)))
+
+# # cbar = plt.colorbar(sc, shrink=0.7)
+# # cbar.set_label("Dynamic height (m)")
+
+# # qk = plt.quiverkey(Q, 0.1, 0.1, 0.1, '10 cm/s', labelpos='W')
+# plt.tight_layout
+# plt.show()
