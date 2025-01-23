@@ -22,31 +22,30 @@ ncfile = nc.Dataset(file_path, 'r')
 time = ncfile.variables['time'][:]
 # change this to readable year-month format
 time = convert_time(time)
-print(time)
+# print(time)
 
 lats = ncfile.variables['lat'][:][:,0]
 lons = ncfile.variables['lon'][:][0,:]
 
 mdt = ncfile.variables['mdt20112020'][:, :]
-sla = ncfile.variables['sla'][84:96, :, :]
-# sla = ncfile.variables['sla'][54, :, :]
+sla = ncfile.variables['sla'][:, :, :]
 # dot is sum of constant mdt and changing sla
 dot = mdt+sla
-dot = np.mean(dot, axis=0)
 
 # using geostrophic equations - g,f, and grad of dot wrt x,y
-ug = ncfile.variables['ug'][84:96, :, :]
-vg = ncfile.variables['vg'][84:96, :, :]
-# ug = ncfile.variables['ug'][54, :, :]
-# vg = ncfile.variables['vg'][54, :, :]
-ug = np.mean(ug, axis=0)
-vg = np.mean(vg, axis=0)
+ug = ncfile.variables['ug'][:, :, :]
+vg = ncfile.variables['vg'][:, :, :]
 
-####### Form Lambert equal spacing grid using lats lons
+
+###### plot of dot, ug, vg mean over whole period 2011-2020
+# dot = np.mean(dot, axis=0)
+# ug = np.mean(ug, axis=0)
+# vg = np.mean(vg, axis=0)
+
+# # Form Lambert equal spacing grid using lats lons
 # m = Basemap(projection='nplaea', boundinglat=60, lon_0=0, resolution='l', round=True, llcrnrlat=60, urcrnrlat=90,
 #             llcrnrlon=-180, urcrnrlon=180)
 
-# ###### plot of dot, ug, vg mean over whole period 2011-2020
 # fig1 = plt.figure(figsize=(6, 6))
 # ax = fig1.add_axes([0.1,0.1,0.8,0.8])
 # m.drawcoastlines(linewidth=1.5)

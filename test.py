@@ -5,6 +5,72 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
+# Filter for the section 2 - TPD FS
+# df = df[
+#     (round(df['Latitude'], 3) == 82.494) & (round(df['Longitude'], 3) == 17.904) |
+#     (round(df['Latitude'], 3) == 82.620) & (round(df['Longitude'], 3) == 14.578) |
+#     (round(df['Latitude'], 3) == 82.721) & (round(df['Longitude'], 3) == 11.148) |
+#     (round(df['Latitude'], 3) == 82.794) & (round(df['Longitude'], 3) == 7.635) |
+#     (round(df['Latitude'], 3) == 82.840) & (round(df['Longitude'], 3) == 4.064) |
+#     (round(df['Latitude'], 3) == 82.858) & (round(df['Longitude'], 3) == 0.461) |
+#     (round(df['Latitude'], 3) == 82.847) & (round(df['Longitude'], 3) == -3.145) |
+#     (round(df['Latitude'], 3) == 82.809) & (round(df['Longitude'], 3) == -6.727) |
+#     (round(df['Latitude'], 3) == 82.742) & (round(df['Longitude'], 3) == -10.257)
+# ]
+
+# bg section center
+# df = df[
+#     (round(df['Latitude'], 3) == 72.724) & (round(df['Longitude'], 3) == -131.033) |
+#     (round(df['Latitude'], 3) == 73.064) & (round(df['Longitude'], 3) == -132.036) |
+#     (round(df['Latitude'], 3) == 73.399) & (round(df['Longitude'], 3) == -133.079) |
+#     (round(df['Latitude'], 3) == 73.728) & (round(df['Longitude'], 3) == -134.164) |
+#     (round(df['Latitude'], 3) == 74.05) & (round(df['Longitude'], 3) == -135.293) | 
+#     (round(df['Latitude'], 3) == 74.366) & (round(df['Longitude'], 3) == -136.468) | 
+#     (round(df['Latitude'], 3) == 74.676) & (round(df['Longitude'], 3) == -137.69) |
+#     (round(df['Latitude'], 3) == 74.977) & (round(df['Longitude'], 3) == -138.962) |
+#     (round(df['Latitude'], 3) == 75.271) & (round(df['Longitude'], 3) == -140.285) | 
+#     (round(df['Latitude'], 3) == 75.556) & (round(df['Longitude'], 3) == -141.661) | 
+#     (round(df['Latitude'], 3) == 75.833) & (round(df['Longitude'], 3) == -143.092) | 
+#     (round(df['Latitude'], 3) == 76.1) & (round(df['Longitude'], 3) == -144.577) | 
+#     (round(df['Latitude'], 3) == 76.358) & (round(df['Longitude'], 3) == -146.12) |
+#     (round(df['Latitude'], 3) == 76.605) & (round(df['Longitude'], 3) == -147.721) |
+#     (round(df['Latitude'], 3) == 76.841) & (round(df['Longitude'], 3) == -149.38) |
+#     (round(df['Latitude'], 3) == 77.066) & (round(df['Longitude'], 3) == -151.098) 
+# ]
+
+
+# print(df)
+
+# dx = 50 * 1e3  # Segment width in meters (assume 50 km spacing)
+# # conversion_factor = 1e-6  # Convert m³/s to Sv
+
+# annual_transport = {}
+# for year, group in merged_df.groupby('Year'):
+#     vg = group['velocity'].values  # Meridional velocity (m/s)
+#     segment_transport = vg * dx  # Transport for each segment in m³/s
+#     # total_transport = np.sum(segment_transport) * conversion_factor # Convert to Sv
+#     total_transport = np.sum(segment_transport) # Convert to Sv
+#     # annual_transport[year] = total_transport/(14*dx)
+#     annual_transport[year] = total_transport/(6*dx)
+
+# annual_transport_df = pd.DataFrame.from_dict(annual_transport, orient='index', columns=['Transport (Sv)'])
+# print(annual_transport_df)
+
+# dummy = {year:np.nan for year in range(1980, 2018) if year not in list(annual_transport.keys())}
+# annual_transport = annual_transport | dummy
+# print(annual_transport)
+
+
+# fig, ax1 = plt.subplots(figsize=(10, 6))
+# ax1.plot(range(1980, 2019), annual_transport_df.values, marker='o', linestyle='-', color='red')
+# ax1.set_xlabel('Year', fontsize=12)
+# ax1.set_ylabel('Transport [Sv]', fontsize=12)
+# plt.title('Meridional Transport along center of BG')
+# ax1.tick_params(axis='y')
+# # ax1.legend()
+# plt.show()
+# plt.savefig('bg_1980_2018_transport.png', dpi=300)
+
 # Example DataFrame
 # df = pd.read_csv('grd_dh_2012_01.csv')
 # df['ug'] = np.full(len(df), np.nan)
@@ -68,7 +134,7 @@ from scipy.interpolate import griddata
 ###### combine all months in a year to one - 2012
 import os
 # print(os.listdir('./'))
-csv_files = [file for file in os.listdir('./') if file.startswith('grd_dh_2015_') and file not in ['data_500m.csv', 'grid_50km_nplaea.csv']]
+csv_files = [file for file in os.listdir('./results/gsc/') if file.startswith('grd_gsc_') and file not in ['grid_50km_nplaea.csv']]
 print(csv_files)
 
 # Initialize an empty list to hold DataFrames
@@ -76,98 +142,84 @@ dataframes = []
 
 # Loop through the CSV files and read each into a DataFrame
 for csv_file in csv_files:
-    file_path = os.path.join('./', csv_file)
+    file_path = os.path.join('./results/gsc/', csv_file)
     df = pd.read_csv(file_path)
     dataframes.append(df)
 
 merged_df = pd.concat(dataframes, ignore_index=True)
-merged_df = merged_df.dropna(subset=['ug', 'vg'])
+# merged_df = merged_df.drop(columns=['D_Siso', 'hFW'])
 print(merged_df.head)
 
-output_file = "grd_dh_2015.csv"
+output_file = "grd_gsc_1980_2018.csv"
 merged_df.to_csv(output_file, index=False)
 
-# print(f"All CSV files merged successfully into {output_file}")
 
+####### distribution of UDAH 2011-2018
 # import pandas as pd
-# import numpy as np
 # import matplotlib.pyplot as plt
-# import cartopy.crs as ccrs
-# import cartopy.feature as cfeature
+# from mpl_toolkits.basemap import Basemap
 
-# # Load the CSV file
-# file_path = 'grd_2011_2018.csv'  # Replace with your actual file path
-# data = pd.read_csv(file_path)
-# # Ensure the 'Datetime' column is parsed as a datetime object
-# data['Datetime'] = pd.to_datetime(data['Datetime'])
+# # Load data
+# df = pd.read_csv('data_points.csv')
 
-# # Extract the year and filter rows for 2011, 2012, 2013
-# filtered_data = data[data['Datetime'].dt.year.isin([2014, 2015, 2016, 2017, 2018])]
-# # print(filtered_data.head)
-# filtered_data.to_csv(file_path)
+# # Convert 'Datetime' column to datetime format
+# df['Datetime'] = pd.to_datetime(df['Datetime'])
 
-# # Filter data for the specified region
-# lat_min, lat_max = 70.0, 82.0
-# lon_min, lon_max = -170.0, -120.0
-# region_data = data[(data['Latitude'] >= lat_min) & (data['Latitude'] <= lat_max) &
-#                    (data['Longitude'] >= lon_min) & (data['Longitude'] <= lon_max)]
-# region_data['Datetime'] = pd.to_datetime(region_data['Datetime'])
-# region_data['Year'] = region_data['Datetime'].dt.year
+# # Define time periods
+# time_periods = {
+#     # "1980-1989": ('1980-01-01', '1989-12-31'),
+#     # "1990-1999": ('1990-01-01', '1999-12-31'),
+#     # "2000-2009": ('2000-01-01', '2009-12-31'),
+#     "2011-2018": ('2011-01-01', '2018-12-31')
+# }
 
-# # Calculate global min and max DH for all years to set fixed colorbar limits
-# dh_vmin = region_data['Surf_DH'].min()
-# dh_vmax = region_data['Surf_DH'].max()
+# # Create a 2x2 subplot
+# fig, ax = plt.subplots(1, 1, figsize=(12, 12))
+# # axes = axes.flatten()  # Flatten for iteration
 
-# # Create figure and axes for 8 years (1 row, 8 columns)
-# fig, axes = plt.subplots(1, 8, figsize=(36, 6), subplot_kw={'projection': ccrs.NorthPolarStereo()})
-# axes = axes.flatten()
+# # Iterate over time periods and plot
+# # for ax, (label, (start, end)) in zip(axes, time_periods.items()):
+#     # Filter data for the time period
+# df_filtered = df[(df['Datetime'] >= '2011-01-01') & (df['Datetime'] <= '2018-12-31')]
+# df_filtered['Month'] = df_filtered['Datetime'].dt.month
 
-# # Loop through each year (2011 to 2018)
-# for i, year in enumerate(range(2011, 2019)):
-#     # Filter data for the current year
-#     region_data_year = region_data[region_data['Year'] == year]
-#     region_mean = region_data_year.groupby(['Latitude', 'Longitude'])[['Surf_DH', 'ug', 'vg']].mean().reset_index()
+# # Set up Basemap
+# m = Basemap(
+#     projection='npstere',
+#     boundinglat=70,
+#     lon_0=0,
+#     resolution='l',
+#     round=True,
+#     ax=ax
+# )
+    
+# # Draw coastlines and gridlines
+# m.drawcoastlines()
+# m.drawparallels(range(70, 91, 5), labels=[1, 0, 0, 0])
+# m.drawmeridians(range(-180, 180, 60), labels=[0, 0, 0, 0])
 
-#     # Extract variables
-#     lons = region_mean['Longitude'].values
-#     lats = region_mean['Latitude'].values
-#     dhs = region_mean['Surf_DH'].values
-#     ug = region_mean['ug'].values
-#     vg = region_mean['vg'].values
+# # Convert lat/lon to map projection
+# x, y = m(df_filtered['Longitude'].values, df_filtered['Latitude'].values)
 
-#     # Current axis
-#     ax = axes[i]
-#     ax.set_extent([-180, -120, 72, 82], crs=ccrs.PlateCarree())
+# # Scatter plot
+# sc = m.scatter(x, y, c=df_filtered['Month'], cmap='viridis', s=30, edgecolor='black', alpha=0.8)
 
-#     # Add map features
-#     ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
-#     ax.add_feature(cfeature.BORDERS, linestyle=':', linewidth=0.5)
-#     ax.add_feature(cfeature.LAND, color='lightgrey')
+# # Add title to each subplot
+# ax.set_title(f"{2011-2018}", fontsize=12)
 
-#     # Scatter plot for Dynamic Height (DH) with fixed colorbar limits
-#     sc = ax.scatter(lons, lats, c=dhs, cmap='YlGnBu', s=130, transform=ccrs.PlateCarree())
+# # Add a colorbar
+# cbar = fig.colorbar(sc, ax=ax, shrink=0.5)
+# cbar.set_label("Month")
+# cbar.set_ticks(range(1, 13))
 
-#     # Quiver plot for geostrophic currents
-#     scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.1
-#     quiver = ax.quiver(lons, lats, ug, vg, scale=scale, width=0.003, color='black', transform=ccrs.PlateCarree())
+# # Add overall title
+# fig.suptitle("Month-Wise Distribution of Profiles (2011-2018)", fontsize=16)
 
-#     # Title for each subplot
-#     ax.set_title(f'{year}', fontsize=10)
+# # Adjust layout
+# # plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-# print(dh_vmin, dh_vmax)
+# # Show plot
+# plt.show()
 
-# # Add a single colorbar outside the loop
-# # cbar_ax = fig.add_axes([0.92, 0.2, 0.01, 0.6])  # Position for the colorbar
-# cbar_ax = fig.add_axes([0.4, 0.08, 0.2, 0.03]) # Position for the colorbar
-# cbar = plt.colorbar(sc, cax=cbar_ax, orientation='horizontal')
-# cbar.set_label('Dynamic Height (m)', fontsize=10)
-# # cbar.set_ticks(np.linspace(0.3, 1, 5))  # Optional: Set specific tick values
 
-# # Super title for the entire figure
-# # fig.suptitle('Dynamic Height and Geostrophic Currents (70°-82°N, -170° to -120°E)', fontsize=14)
 
-# # Adjust spacing between subplots
-# # plt.subplots_adjust(wspace=0.1)
-# plt.tight_layout()
-# # Show the plot
-# plt.savefig('annual_bg.png', dpi=300)

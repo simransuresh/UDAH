@@ -45,30 +45,15 @@ def read_data(fname, hydr_data):
     # print(hydr_data)
     return hydr_data
 
-# hydr_data = read_data('data/2008.csv', hydr_data)
-# hydr_data = read_data('data/2009.csv', hydr_data)
-# hydr_data = read_data('data/2010.csv', hydr_data)
-hydr_data = read_data('data/2011.csv', hydr_data)
-# hydr_data = read_data('data/2012.csv', hydr_data)
-# hydr_data = read_data('data/2013.csv', hydr_data)
-# hydr_data = read_data('data/2014.csv', hydr_data)
-# hydr_data = read_data('data/2015.csv', hydr_data)
-# hydr_data = read_data('data/2016.csv', hydr_data)
-# hydr_data = read_data('data/2017.csv', hydr_data)
-# hydr_data = read_data('data/2018.csv', hydr_data)
+for year in range(1980, 2008):
+    hydr_data = read_data(f'data/pp_UDAH/{year}.csv', hydr_data)
+
 print('Done reading all hydrographic data...')
 
-# df = pd.read_csv('data_500m_extended.csv')
-# df['Latitude'] = np.array([round(lat, 5) for lat in df['Latitude'].values])
-# df['Longitude'] = np.array([round(lon, 5) for lon in df['Longitude'].values])
-# df['Depth'] = np.array([round(d, 5) for d in df['Depth'].values])
-# # df['Datetime'] = np.array([datetime(2012, 7, 1) if dt is None else dt for dt in df['Datetime'].values])
-# df['Surf_DH'] = np.full(len(df), np.nan)
-# print(df.head)
 
-# fp = open('data_500m_extended.csv', 'w+', newline='')
-# writer = csv.writer(fp, delimiter=',')
-# writer.writerow(['Latitude','Longitude','Depth','Datetime','Surf_DH','D_Siso','hFW'])
+fp = open('data_500m_clim.csv', 'w+', newline='')
+writer = csv.writer(fp, delimiter=',')
+writer.writerow(['Latitude','Longitude','Depth','Datetime','Surf_DH','D_Siso','hFW'])
 
 Sref=35
 Siso=34 # isohaline
@@ -102,20 +87,12 @@ for latlon,data in hydr_data.items():
                     
                 # DOT or absolute ssh is the dynamic height at the surface pressure 0dbar
                 hydr_data[latlon]['Surf_DH'] = round(ster_height,5)
-                print(ster_height)
-                # df.loc[(df['Latitude'] == latlon[0]) & (df['Longitude'] == latlon[1]), 'Surf_DH'] = hydr_data[latlon]['Surf_DH']
 
-                # writer.writerow([latlon[0],latlon[1],nearest_depth(latlon[0],latlon[1]), hydr_data[latlon]['dt'],hydr_data[latlon]['Surf_DH'], np.nan, np.nan])
+                writer.writerow([round(latlon[0], 5),round(latlon[1], 5),nearest_depth(latlon[0],latlon[1]), hydr_data[latlon]['dt'],hydr_data[latlon]['Surf_DH'], np.nan, np.nan])
             
             except ValueError as err:
                 print('Setting DH to nan due to error...', latlon, ypres)
                 i=i+1
-                break
 
-    
-print(i) 
-# print(df.head)
-# df.to_csv('2012.csv', index=False)
-# df.to_csv('data_500m_extended.csv', index=False)    # for tac 2012 month
-
-# fp.close()
+print(i)    # in total since 1980-2007, 662 profiles were rejected due to valuerror
+fp.close()

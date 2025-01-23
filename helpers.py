@@ -142,7 +142,7 @@ def tdiff(dates1, dates2=None):
     
     return np.abs(date_diff_matrix)
     
-dp = pd.read_csv('data_500m.csv')
+dp = pd.read_csv('data_points.csv')
 dp_depth = {
     (row['Latitude'], row['Longitude']): {
         'depth': row['Depth'],

@@ -2,9 +2,11 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
-df = pd.read_csv('grd_dh_2015.csv')
-df = df[df['Datetime']=='2015-12-01']
+df = pd.read_csv('grd_gsc_1980_2018.csv')
+df = df[df['Datetime']>='1990-01-01']
 X = df['X_meters'].values
 Y = df['Y_meters'].values
 lons = df['Longitude'].values
@@ -12,8 +14,6 @@ lats = df['Latitude'].values
 dhs = df['Surf_DH'].values
 ug = df['ug'].values
 vg = df['vg'].values
-# hFW = df['hFW'].values
-# D_Siso = df['D_Siso'].values
 
 print(df.head)
 
@@ -27,9 +27,38 @@ print(df.head)
 
 # x, y = m(lons, lats)
 # sc = m.scatter(x, y, s=20, c=dhs, cmap='YlGnBu', vmin=0, vmax=0.8)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.02
+# q = m.quiver(x, y, ug, vg, scale=scale, color='black', width=0.003)
 
 # cbar = plt.colorbar(sc, ax=ax, shrink=0.7)
 # cbar.set_label("Dynamic height (m)")
+# plt.show()
+
+
+fig = plt.figure(figsize=(6, 4))
+projection = ccrs.NorthPolarStereo()
+ax = plt.axes(projection=projection)
+
+# Set the extent to focus on the region of interest
+ax.set_extent([-180, 180, 70, 90], crs=ccrs.PlateCarree())
+
+# Add map features
+ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
+ax.add_feature(cfeature.BORDERS, linestyle=':', linewidth=0.5)
+ax.add_feature(cfeature.LAND, color='lightgrey')
+
+# Scatter plot for mean DH
+sc = ax.scatter(lons, lats, c=dhs, cmap='YlGnBu', s=180, transform=ccrs.PlateCarree(), label='Mean DH')
+cb = plt.colorbar(sc, orientation='vertical', pad=0.05, shrink=0.7)
+cb.set_label('Mean Dynamic Height (m)', fontsize=12)
+
+# Quiver plot for geostrophic currents (u_g, v_g)
+# scale = np.nanmax(np.sqrt(ug**2 + vg**2)) / 0.03
+# quiver = ax.quiver(lons, lats, ug, vg, transform=ccrs.PlateCarree(), scale=scale, color='black', width=0.003)
+
+# Add labels and title
+# plt.savefig('bg_saga_2015.png', dpi=300)
+plt.show()
 
 # plt.savefig('Sep2015_seas.png', dpi=300)
 
